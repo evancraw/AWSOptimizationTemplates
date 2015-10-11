@@ -1,0 +1,218 @@
+{
+  "objects": [
+    {
+      "occurrences": "1",
+      "period": "1 Hour",
+      "name": "OneTime",
+      "id": "ScheduleId_VAMgX",
+      "type": "Schedule",
+      "startAt": "FIRST_ACTIVATION_DATE_TIME"
+    },
+    {
+      "schedule": {
+        "ref": "DefaultSchedule"
+      },
+      "dependsOn": {
+        "ref": "ActivityId_MvEsv"
+      },
+      "name": "EMRprocess",
+      "step": [
+        "/home/hadoop/contrib/streaming/hadoop-streaming.jar,-files,s3://ecrawpublic/dbr_rt_consolidatedbill_transform.py,-mapper,dbr_rt_consolidatedbill_transform.py,-input,s3://storagebucket/Datapipeline/DBR,-output,s3n://storagebucket/Datapipeline/DBRafterEMR,-jobconf,mapred.output.compress=true",
+        "s3://us-west-2.elasticmapreduce/libs/script-runner/script-runner.jar,s3://us-west-2.elasticmapreduce/libs/pig/pig-script,--run-pig-script,--pig-versions,0.12.0,--args,-f,s3://ecrawpublic/ReRate10tags.pig,-p,INPUT=s3n://storagebucket/Datapipeline/DBRafterEMR,-p,OUTPUT=s3n://storagebucket/Datapipeline/DBRafterEMR/2"
+      ],
+      "runsOn": {
+        "ref": "EmrClusterId_SX2fs"
+      },
+      "id": "ActivityId_ne8YH",
+      "type": "EmrActivity"
+    },
+    {
+      "databaseName": "dev",
+      "*password": "admin123ADMIN",
+      "name": "DefaultRedshiftDatabase1",
+      "clusterId": "redshift-clusterid",
+      "id": "RedshiftDatabaseId_OYjff",
+      "region": "ap-southeast-2",
+      "type": "RedshiftDatabase",
+      "username": "admin"
+    },
+    {
+      "schedule": {
+        "ref": "ScheduleId_VAMgX"
+      },
+      "database": {
+        "ref": "RedshiftDatabaseId_OYjff"
+      },
+      "dependsOn": {
+        "ref": "ActivityId_ScvN7"
+      },
+      "name": "SetupRITable",
+      "id": "ActivityId_wk2uY",
+      "runsOn": {
+        "ref": "ResourceId_psm9p"
+      },
+      "type": "SqlActivity",
+      "script": "CREATE TABLE my_RIs( ripayeraccountid varchar(12) NOT NULL, rilinkedaccountid varchar(12), service varchar(255), leasestart date, leaseend date, RItype varchar(80), riinstancetype varchar(255), fixedprice decimal(18,10), RIos varchar(255), riavailabilityzone varchar(80), ri_subscriptionid integer, leaseterm integer, leasestatus varchar(40), leaseid varchar(255), leaseinstanceqty integer, leaserefundamt VARCHAR(255), riregion varchar(40), riusageprice decimal(18,10), riflag varchar(40)) distkey (rilinkedaccountid) sortkey (rilinkedaccountid, ri_subscriptionid)"
+    },
+    {
+      "subnetId": "subnet-05a44f60",
+      "schedule": {
+        "ref": "ScheduleId_VAMgX"
+      },
+      "resourceRole": "DataPipelineDefaultResourceRole",
+      "role": "DataPipelineDefaultRole",
+      "securityGroupIds": "sg-example",
+      "instanceType": "m1.small",
+      "name": "OneTimeEC2",
+      "id": "ResourceId_psm9p",
+      "type": "Ec2Resource",
+      "region": "ap-southeast-2",
+      "spotBidPrice": ".05",
+      "terminateAfter": "59 Minutes"
+    },
+    {
+      "subnetId": "subnet-05a44f60",
+      "schedule": {
+        "ref": "DefaultSchedule"
+      },
+      "resourceRole": "DataPipelineDefaultResourceRole",
+      "role": "DataPipelineDefaultRole",
+      "securityGroupIds": "sg-example",
+      "instanceType": "m1.medium",
+      "name": "EC2workhorse",
+      "id": "ResourceId_58kir",
+      "type": "Ec2Resource",
+      "region": "ap-southeast-2",
+      "spotBidPrice": ".05"
+    },
+    {
+      "schedule": {
+        "ref": "DefaultSchedule"
+      },
+      "directoryPath": "s3://storagebucket/Datapipeline/DBRafterEMR/2/",
+      "name": "EMR Processed Data",
+      "id": "DataNodeId_U8ORN",
+      "type": "S3DataNode"
+    },
+    {
+      "schedule": {
+        "ref": "DefaultSchedule"
+      },
+      "scriptUri": "s3://storagebucket/dbrcopy.sh",
+      "name": "S3 Copy",
+      "runsOn": {
+        "ref": "ResourceId_58kir"
+      },
+      "id": "ActivityId_MvEsv",
+      "type": "ShellCommandActivity"
+    },
+    {
+      "subnetId": "subnet-05a44f60",
+      "role": "DataPipelineDefaultRole",
+      "coreInstanceCount": "3",
+      "coreInstanceBidPrice": "1.5",
+      "masterInstanceType": "m3.2xlarge",
+      "type": "EmrCluster",
+      "terminateAfter": "23 Hours",
+      "schedule": {
+        "ref": "DefaultSchedule"
+      },
+      "resourceRole": "DataPipelineDefaultResourceRole",
+      "name": "DefaultEmrCluster1",
+      "coreInstanceType": "c3.2xlarge",
+      "id": "EmrClusterId_SX2fs",
+      "masterInstanceBidPrice": "1.0",
+      "amiVersion": "3.9.0",
+      "region": "ap-southeast-2"
+    },
+    {
+      "failureAndRerunMode": "CASCADE",
+      "schedule": {
+        "ref": "DefaultSchedule"
+      },
+      "resourceRole": "DataPipelineDefaultResourceRole",
+      "role": "DataPipelineDefaultRole",
+      "pipelineLogUri": "s3://storagebucket",
+      "scheduleType": "cron",
+      "name": "Default",
+      "id": "Default"
+    },
+    {
+      "period": "1 Day",
+      "name": "Every Day",
+      "id": "DefaultSchedule",
+      "type": "Schedule",
+      "startAt": "FIRST_ACTIVATION_DATE_TIME"
+    },
+    {
+      "role": "DataPipelineDefaultRole",
+      "subject": "Your billing data is processed and loaded into Redshift",
+      "name": "NotificationofCompletion1",
+      "id": "ActionId_nM8QT",
+      "message": "Redshift processed (DBR Data)",
+      "type": "SnsAlarm",
+      "topicArn": "arn:aws:sns:example"
+    },
+    {
+      "output": {
+        "ref": "DataNodeId_AU0Ye"
+      },
+      "input": {
+        "ref": "DataNodeId_U8ORN"
+      },
+      "schedule": {
+        "ref": "DefaultSchedule"
+      },
+      "dependsOn": {
+        "ref": "ActivityId_ne8YH"
+      },
+      "name": "DailyRedshiftCopy",
+      "runsOn": {
+        "ref": "ResourceId_58kir"
+      },
+      "id": "ActivityId_obmuX",
+      "commandOptions": [
+        "delimiter ','",
+        "emptyasnull",
+        "blanksasnull",
+        "dateformat as 'auto'",
+        "timeformat as 'auto'",
+        "ignoreheader as 1",
+        "maxerror as 10000"
+      ],
+      "type": "RedshiftCopyActivity",
+      "insertMode": "KEEP_EXISTING",
+      "onSuccess": {
+        "ref": "ActionId_nM8QT"
+      }
+    },
+    {
+      "schedule": {
+        "ref": "ScheduleId_VAMgX"
+      },
+      "database": {
+        "ref": "RedshiftDatabaseId_OYjff"
+      },
+      "name": "SetupDBRRTTable",
+      "id": "ActivityId_ScvN7",
+      "runsOn": {
+        "ref": "ResourceId_psm9p"
+      },
+      "type": "SqlActivity",
+      "script": "CREATE TABLE my_dbrrt_table( invoiceid VARCHAR(40), payeraccountid VARCHAR(12) NOT NULL, linkedaccountid VARCHAR(12), recordid VARCHAR(255), productname VARCHAR(255), rateid INTEGER, subscriptionid INTEGER, pricingplanid INTEGER, usagetype VARCHAR(255), operation VARCHAR(255), availabilityzone VARCHAR(16), reservedinstance BOOLEAN, itemdescription VARCHAR(255), usagestartdate TIMESTAMP, usageenddate TIMESTAMP, instancetype varchar(255), os varchar(255), sharedflag varchar (40), region varchar(40), usagequantity DECIMAL(24,8), blendedrate DECIMAL(18,10), blendedcost DECIMAL(16,8), unblendedrate DECIMAL(18,10), unblendedcost DECIMAL(16,8), resourceid VARCHAR(255), Tag_1 varchar(255), Tag_2 varchar(255), Tag_3 varchar(255), Tag_4 varchar(255), Tag_5 varchar(255), Tag_6 varchar(255), Tag_7 varchar(255), Tag_8 varchar(255), Tag_9 varchar(255), Tag_10 varchar(255), pricingos varchar(255), pricingos2 varchar(255), pricingshared varchar(255), pricingtype varchar(255), pricingregion varchar(255), odrate DECIMAL(18,10), oneyearheavyfee DECIMAL(18,10), oneyearheavyusagerate DECIMAL(18,10), threeyearheavyfee DECIMAL(18,10), threeyearheavyusagerate DECIMAL(18,10), oneyearmediumfee DECIMAL(18,10), oneyearmediumusagerate DECIMAL(18,10), threeyearmediumfee DECIMAL(18,10), threeyearmediumusagerate DECIMAL(18,10), oneyearallupfrontfee DECIMAL(18,10), oneyearallupfrontusagerate DECIMAL(18,10), threeyearallupfrontfee DECIMAL(18,10), threeyearallupfrontusagerate DECIMAL(18,10), oneyearnoupfrontfee DECIMAL(18,10), oneyearnoupfrontusagerate DECIMAL(18,10), threeyearnoupfrontfee DECIMAL(18,10), threeyearnoupfrontusagerate varchar(255), primary key(usagestartdate, linkedaccountid, recordid)) distkey (usagestartdate) sortkey (usagestartdate, linkedaccountid, recordid)"
+    },
+    {
+      "schedule": {
+        "ref": "DefaultSchedule"
+      },
+      "database": {
+        "ref": "RedshiftDatabaseId_OYjff"
+      },
+      "name": "Redshift Table",
+      "id": "DataNodeId_AU0Ye",
+      "type": "RedshiftDataNode",
+      "tableName": "my_dbrrt_table"
+    }
+  ],
+  "parameters": []
+}
