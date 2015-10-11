@@ -1,3 +1,13 @@
 Please download
 
 https://s3-us-west-1.amazonaws.com/ecrawpublic/How+to+-+DBR-rt+Redshift+Tableau+Draft1l.docx
+
+to change the data source of the tableau template:
+
+find and replace: my_dbrrt_table and my_ris with the name of your dbrrt table and ri table
+
+go to the line:
+
+<connection class='redshift' dbname='dev' odbc-connect-string-extras='' port='5194' schema='public' server='yourclustername.string.us-east-1.redshift.amazonaws.com' single-node='no' sslmode='' username='user'>
+
+and replace this with your redshift login details
