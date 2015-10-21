@@ -1,6 +1,14 @@
+To set up a datapipeline to process your DBR and store it in Redshift, either:
+
 Please download
 
 https://s3-us-west-1.amazonaws.com/ecrawpublic/How+to+-+DBR-rt+Redshift+Tableau+Draft1l.docx
+
+or
+
+Use the cloudformation and datapipeline templates in this repository.
+
+Then
 
 to change the data source of the tableau template:
 
