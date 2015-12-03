@@ -1,0 +1,18 @@
+To set up instance_ranking table use this command in Aginity
+
+CREATE TABLE Instance_Ranking(
+operatingsystem varchar(255) NOT NULL,
+sharedflag varchar(255),
+instancetype varchar(255),
+region varchar(80),
+odrate decimal(18,10),
+vcpu decimal(18,10),
+memory decimal(18,10),
+instancestorage decimal(18,10),
+nwprivate decimal(18,10),
+odrank decimal(18,10),
+ecu decimal(18,10))
+
+then you can fill it up with this file
+
+https://s3-us-west-1.amazonaws.com/ecrawpublic/instance_ranking.csv
